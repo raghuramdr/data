@@ -16,6 +16,7 @@ try:
     logger.info("Successfully imported config dict from configuration file")
     logger.info("The AMR is {}".format(var_dict["drug_name"]))
     logger.info("The organism is {}".format(var_dict["organism"]))
+    logger.info("The output directory is".format(os.path.join(os.getcwd(), var_dict["fasta_dir"])))
 
 except Exception:
     logger.exception("Issue in loading the configuration file")
@@ -102,11 +103,11 @@ def write_post_req_to_fasta(response, genome_id):
          logger.info("Empty output from POST request for genome id {}. Skipping this file".format(genome_id))
          return 
 
-      with open(filename, "w") as file_:
+      with open(os.path.join(os.getcwd(), var_dict["fasta_dir"], filename), "w") as file_:
         file_.write(response.text)
       
-      logger.info("FASTA file for genome ID {} successfully written to disk".format(genome_id))
-      logger.info("The size of the file is {} bytes".format(len(response.text)))
+        logger.info("FASTA file for genome ID {} successfully written to disk".format(genome_id))
+        logger.info("The size of the file is {} bytes".format(len(response.text)))
 
             
     except Exception:
@@ -132,8 +133,8 @@ if __name__ == "__main__":
         if os.path.exists(str(genome_id)+'.fa'):
             logger.info("FASTA file for genome with genome ID {} exists. Skipping the download for this".format(genome_id))
             continue
-       # response = post_request(genome_id=genome_id)
-       # write_post_req_to_fasta(response=response, genome_id=genome_id)
+        response = post_request(genome_id=genome_id)
+        write_post_req_to_fasta(response=response, genome_id=genome_id)
         
 
     logger.info("Program execution finished")
