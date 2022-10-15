@@ -14,7 +14,7 @@ file_handler.setFormatter(formatter)
 logger.info("Opening the configuration file")
 cwd = os.getcwd()
 
-var_dict = {"organism":"klebsiella_pneumoniae", "drug_name":"amikacin"}
+var_dict = {"organism":"klebsiella_pneumoniae", "drug_name":"piperacilin"}
 ## The data path is always PWD/organism/drug_name
 ## If you need to change it change only the organism name and the name of the drug 
 ## in argument of the code below

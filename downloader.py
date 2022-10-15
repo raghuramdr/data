@@ -12,23 +12,37 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
 try:
-    from config import config
-    logger.info("config imported successfully from config file")
+    from config import config, var_dict
+    logger.info("Successfully imported config dict from configuration file")
+    logger.info("The AMR is {}".format(var_dict["drug_name"]))
+    logger.info("The organism is {}".format(var_dict["organism"]))
+
 except Exception:
     logger.exception("Issue in loading the configuration file")
-
-
 
 
 def read_file():
     try:
      df = pd.read_csv(config["data_file"])
-     logging.info("Successfully read the file {}".format(config["data_file"]))
+     logger.info("Successfully read the data file.")
      return df
 
     except Exception:
         logging.exception("Issue with reading file {}".format(config["data_file"]))
 
+
+def compute_stats(dataframe):
+    try:
+      
+       logger.info("The number of rows in the dataframe is {}".format(len(dataframe)))
+       nan_count = dataframe["genome_id"].isna().sum() 
+       logger.info("The number of NaNs in the column genome_id is {}".format(nan_count))
+       pct_count = (nan_count)/(len(dataframe))
+       logger.info("The percentage of NaNs in the genome_id column is {}".format(pct_count*100))
+       return pct_count
+   
+    except Exception:
+       logger.exception("Error while computing NaN statistics")
 
 def post_request(genome_id):
     headers = {
@@ -52,7 +66,7 @@ def post_request(genome_id):
     data = {
         'rql': 'in(genome_id%2C({}))%26sort(%2Bsequence_id)%26limit(2500000)'.format(genome_id),
     }
-    logger.info("Data is {}".format(data))
+    logger.info("The rql is {}".format(data))
 
 
     try:
@@ -68,6 +82,8 @@ def post_request(genome_id):
         logger.exception("Error in the POST request")
 
 
+            
+
 def write_post_req_to_fasta(response, genome_id):
 
     """
@@ -81,18 +97,18 @@ def write_post_req_to_fasta(response, genome_id):
     """
     filename = str(genome_id)+'.fa'
     try:
+     
+      if len(response.text) == 0:
+         logger.info("Empty output from POST request for genome id {}. Skipping this file".format(genome_id))
+         return 
+
       with open(filename, "w") as file_:
         file_.write(response.text)
-      file_size = os.stat(filename)
       
-      if file_size.st_size>0:
-        logger.info("FASTA file for genome ID {} successfully written to disk".format(genome_id))
-        logger.info("The size of the file is {} bytes".format(file_size.st_size))
+      logger.info("FASTA file for genome ID {} successfully written to disk".format(genome_id))
+      logger.info("The size of the file is {} bytes".format(len(response.text)))
 
-      else:
-        logger.warning("FASTA file for genome ID {} is empty. Please check it! ".format(genome_id))
-
-
+            
     except Exception:
         logger.exception("Issue with writing FASTA file for genome ID {}".format(genome_id))
     
@@ -103,14 +119,21 @@ if __name__ == "__main__":
     logging.info("Beginning the execution of the program")
 
     df = read_file()
+    pct_count = compute_stats(df)
+    if pct_count == 1.0:
+       logger.warning("All the files in the column are NaNs. Please check the file!! Stopping the download.")
+       raise SystemExit
+    
+    df.dropna(subset=["genome_id"], inplace=True)
+
     for genome_id in df["genome_id"]:
 
         logger.info("Genome ID is {}".format(genome_id))
         if os.path.exists(str(genome_id)+'.fa'):
             logger.info("FASTA file for genome with genome ID {} exists. Skipping the download for this".format(genome_id))
             continue
-        response = post_request(genome_id=genome_id)
-        write_post_req_to_fasta(response=response, genome_id=genome_id)
+       # response = post_request(genome_id=genome_id)
+       # write_post_req_to_fasta(response=response, genome_id=genome_id)
         
 
     logger.info("Program execution finished")
