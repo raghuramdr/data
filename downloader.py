@@ -126,11 +126,13 @@ if __name__ == "__main__":
        raise SystemExit
     
     df.dropna(subset=["genome_id"], inplace=True)
-
+    ctr = 0
+    exist_ctr = 0
     for genome_id in df["genome_id"]:
 
         logger.info("Genome ID is {}".format(genome_id))
-        if os.path.exists(str(genome_id)+'.fa'):
+        if os.path.exists(os.path.join(os.getcwd(),var_dict["fasta_dir"], str(genome_id)+'.fa')):
+            exist_ctr += 1
             logger.info("FASTA file for genome with genome ID {} exists. Skipping the download for this".format(genome_id))
             continue
         response = post_request(genome_id=genome_id)
@@ -138,5 +140,4 @@ if __name__ == "__main__":
         
 
     logger.info("Program execution finished")
-
-
+    logger.info("{} files already exist".format(exist_ctr))
