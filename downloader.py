@@ -26,6 +26,9 @@ def read_file():
     try:
      df = pd.read_csv(config["data_file"])
      logger.info("Successfully read the data file.")
+     if "Genome ID" in df.columns:
+         df.rename(columns={'Genome ID':'genome_id'},inplace=True)
+         
      return df
 
     except Exception:
@@ -139,5 +142,5 @@ if __name__ == "__main__":
         write_post_req_to_fasta(response=response, genome_id=genome_id)
         
 
-    logger.info("Program execution finished")
+    logger.info("Program execution finished for organism:{} and AMR:{}".format(var_dict["organism"], var_dict["drug_name"]))
     logger.info("{} files already exist".format(exist_ctr))
