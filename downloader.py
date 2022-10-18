@@ -12,11 +12,11 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
 try:
-    from config import config, var_dict
+    from config import config, var_dict, output_path
     logger.info("Successfully imported config dict from configuration file")
     logger.info("The AMR is {}".format(var_dict["drug_name"]))
     logger.info("The organism is {}".format(var_dict["organism"]))
-    logger.info("The output directory is".format(os.path.join(os.getcwd(), var_dict["fasta_dir"])))
+    logger.info("The output directory is".format(output_path))
 
 except Exception:
     logger.exception("Issue in loading the configuration file")
@@ -106,7 +106,7 @@ def write_post_req_to_fasta(response, genome_id):
          logger.info("Empty output from POST request for genome id {}. Skipping this file".format(genome_id))
          return 
 
-      with open(os.path.join(os.getcwd(), var_dict["fasta_dir"], filename), "w") as file_:
+      with open(os.path.join(output_dir, filename), "w") as file_:
         file_.write(response.text)
       
         logger.info("FASTA file for genome ID {} successfully written to disk".format(genome_id))

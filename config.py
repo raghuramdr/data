@@ -14,7 +14,7 @@ file_handler.setFormatter(formatter)
 logger.info("Opening the configuration file")
 cwd = os.getcwd()
 
-var_dict = {"organism":"klebsiella_pneumoniae", "drug_name":"amikacin", "fasta_dir":"fasta_files"}
+var_dict = {"organism":"klebsiella_pneumoniae", "drug_name":"cetriaxone", "fasta_dir":"fasta_files"}
 ## The data path is always PWD/organism/drug_name
 ## If you need to change it change only the organism name and the name of the drug 
 ## in argument of the code below
@@ -24,7 +24,9 @@ except Exception:
 	logger.exception("Issue with data path")
 
 try:
-    output_path = os.path.join(cwd, var_dict["fasta_dir"])
+    output_path = os.path.join(cwd, var_dict["organism"], var_dict["fasta_dir"])
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
 except Exception:
     logger.exception("Issue with the fasta_dir variable in var_dict.")
 
