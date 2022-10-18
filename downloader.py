@@ -3,6 +3,7 @@ import json
 import os
 import pandas as pd
 
+## Import the logging module
 import logging
 logger=logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -23,6 +24,14 @@ except Exception:
 
 
 def read_file():
+    """
+    Read the csv file containing the genome IDs.
+    If the csv file contains a column named "Genome ID",
+    rename it "genome_id".
+
+    return: Nothing to be returned
+    """
+
     try:
      df = pd.read_csv(config["data_file"])
      logger.info("Successfully read the data file.")
@@ -36,6 +45,15 @@ def read_file():
 
 
 def compute_stats(dataframe):
+    """
+    For the pandas dataframe created from the csv file for a particular combination of 
+    the organism and drug, this function will compute the number of NaNs in the column
+    'genome_id'. It will return this value as a fraction of the total length of the 
+    dataframe
+
+    dataframe: Pandas dataframe. 
+    return: Count of NaNs as a fraction of the lenght of the dataframe
+    """
     try:
       
        logger.info("The number of rows in the dataframe is {}".format(len(dataframe)))
@@ -48,7 +66,15 @@ def compute_stats(dataframe):
     except Exception:
        logger.exception("Error while computing NaN statistics")
 
+
 def post_request(genome_id):
+    """
+    This function will make a POST request for the variable 'genome_id'. 
+    The output of the POST request will be returned.
+    
+    genome_id: Number of float type, using which the POST request will be made
+    return: Response object containing the response code and the data to be downloaded.
+    """
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:105.0) Gecko/20100101 Firefox/105.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
@@ -85,8 +111,6 @@ def post_request(genome_id):
     except Exception:
         logger.exception("Error in the POST request")
 
-
-            
 
 def write_post_req_to_fasta(response, genome_id):
 
