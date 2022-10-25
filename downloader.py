@@ -6,12 +6,26 @@ import pandas as pd
 
 ## Import the logging module
 import logging
-logger=logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-file_handler = logging.FileHandler("downloader.log")
-formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
+
+
+def set_logger(config):
+    """
+    This function customizes the log handler
+
+    config: Object of type argparse.
+    return: logger object
+    """
+
+    logger=logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    if not os.path.exists(os.path.join(os.getcwd(), config.pathogen, "logs")):
+        os.mkdir(os.path.join(os.getcwd(), config.pathogen, "logs"))
+        
+    file_handler = logging.FileHandler(os.path.join(os.getcwd(), config.pathogen, "logs", "download_{}_{}.log".format(config.pathogen, config.anti_microbial)))
+    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    return logger
 
 
 def read_file(filepath):
@@ -158,7 +172,7 @@ def set_parameters():
       return args
     
     except Exception:
-      logger.exception("Issue in setting parameters")
+        print("Issue in setting parameters")
 
 
 def set_paths(config):
@@ -174,6 +188,7 @@ def set_paths(config):
      path_dict = {}
      path_dict["filepath"] = os.path.join(os.getcwd(), config.pathogen, config.anti_microbial, config.filename)
      path_dict["write_path"] = os.path.join(os.getcwd(), config.pathogen, "fasta_files")
+     
      if not os.path.exists(path_dict["write_path"]):
         os.mkdir(path_dict["write_path"])
     
@@ -187,8 +202,8 @@ def set_paths(config):
 
 if __name__ == "__main__":
     
-    logger.info("Beginning the execution of the program")
     config = set_parameters()
+    logger = set_logger(config)
     path_dict = set_paths(config)
 
     logger.info("The name of the pathogen is {}".format(config.pathogen))
@@ -196,7 +211,7 @@ if __name__ == "__main__":
     logger.info("The name of the anti microbial is {}".format(config.anti_microbial))
     logger.info("The filename is {}".format(config.filename)) 
     
-    
+    """ 
     df = read_file(path_dict["filepath"])
     pct_count = compute_stats(df)
    
@@ -216,8 +231,8 @@ if __name__ == "__main__":
             continue
         response = post_request(genome_id=genome_id)
         write_post_req_to_fasta(response=response, genome_id=genome_id, write_path=path_dict["write_path"])
-        
+    """    
 
     logger.info("Program execution finished!")
-    logger.info("{} files already exist".format(exist_ctr))
+    #logger.info("{} files already exist".format(exist_ctr))
 
