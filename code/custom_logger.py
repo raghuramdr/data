@@ -22,3 +22,7 @@ class CustomFormatter(logging.Formatter):
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record) 
+
+    #TODO: Check if this needs to be a static method or class method
+    def set_logger():
+        return

@@ -9,6 +9,7 @@ import logging
 
 from custom_logger import CustomFormatter
 
+#TODO: Needs to be moved into custom_logger.py and the previous LOC will be deleted
 def set_logger(config):
     """
     This function customizes the log handler
@@ -121,23 +122,8 @@ def post_request(genome_id):
     
     genome_id: Number of float type, using which the POST request will be made
     return: Response object containing the response code and the data to be downloaded.
+    #TODO: Pass the headers and URL as an argument which is imported from config.py
     """
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:105.0) Gecko/20100101 Firefox/105.0',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-GB,en;q=0.5',
-        # 'Accept-Encoding': 'gzip, deflate, br',
-        'Origin': 'https://www.bv-brc.org',
-        'DNT': '1',
-        'Connection': 'keep-alive',
-        'Referer': 'https://www.bv-brc.org/',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'cross-site',
-        'Sec-Fetch-User': '?1',
-        'Sec-GPC': '1',
-    }
 
 
     data = {
@@ -147,7 +133,7 @@ def post_request(genome_id):
 
 
     try:
-        response=requests.post('https://patricbrc.org/api/genome_sequence/?&http_download=true&http_accept=application/dna+fasta', headers=headers, data=data)
+        response=requests.post(config["URL"], headers=config["headers"], data=data)
 
         if response.status_code != 200:
             logger.warning("Genome ID {} has a problem. The response is {}".format(genome_id, response.status_code) )
