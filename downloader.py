@@ -142,6 +142,13 @@ def write_post_req_to_fasta(response, genome_id, write_path):
     
 
 def set_parameters():
+
+    """
+    Function to accept user defined parameters.
+
+    return: argparse object named config
+    """
+
     try:
       parser = ap.ArgumentParser(description="Read CSV files and download FASTA files corresponding to the genome IDs in the CSV files.")
       parser.add_argument("--pathogen", type=str, required=True, help="The name of the pathogen for which the data has to be downloaded. There should be a corresponding directory with the exact same name!")
@@ -155,7 +162,15 @@ def set_parameters():
 
 
 def set_paths(config):
-   try:
+    
+    """
+    Function to set paths for the output directory and the input files.
+
+    config: Argparse object
+    return: Dictionary containing the output directory and the input files as values.
+    """
+
+    try:
      path_dict = {}
      path_dict["filepath"] = os.path.join(os.getcwd(), config.pathogen, config.anti_microbial, config.filename)
      path_dict["write_path"] = os.path.join(os.getcwd(), config.pathogen, "fasta_files")
@@ -166,8 +181,8 @@ def set_paths(config):
      logger.info("Write destination is {}".format(path_dict["write_path"])) 
      return path_dict
    
-   except Exception:
-     logger.exception("Issue while setting paths.")
+    except Exception:
+      logger.exception("Issue while setting paths.")
 
 
 if __name__ == "__main__":
