@@ -1,6 +1,7 @@
-import requests
-import json
 import os
+import requests
+
+import argparse as ap
 import pandas as pd
 
 ## Import the logging module
@@ -12,36 +13,34 @@ formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(messag
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
-try:
-    from config import config, var_dict, output_path
-    logger.info("Successfully imported config dict from configuration file")
-    logger.info("The AMR is {}".format(var_dict["drug_name"]))
-    logger.info("The organism is {}".format(var_dict["organism"]))
-    logger.info("The output directory is".format(output_path))
 
-except Exception:
-    logger.exception("Issue in loading the configuration file")
-
-
-def read_file():
+def read_file(filepath):
     """
     Read the csv file containing the genome IDs.
     If the csv file contains a column named "Genome ID",
     rename it "genome_id".
-
-    return: Nothing to be returned
+    
+    filepath: Full path to the CSV file containing the genome IDs
+    return: Pandas dataframe containing genome IDs 
     """
 
     try:
-     df = pd.read_csv(config["data_file"])
+     assert os.path.exists(filepath), "File does not exist."
+     df = pd.read_csv(filepath, error_bad_lines=False, engine="python")
+     if df is None:
+        logger.critical("The dataframe is of None type. Cannot proceed ahead! Please check! EXITING!")
+        raise SystemExit
      logger.info("Successfully read the data file.")
      if "Genome ID" in df.columns:
          df.rename(columns={'Genome ID':'genome_id'},inplace=True)
          
      return df
-
+ 
+    except AssertionError:
+        logger.error("The file does not exist at path {}".format(filepath))
+    
     except Exception:
-        logging.exception("Issue with reading file {}".format(config["data_file"]))
+       logger.exception("Issue with reading file at location {}".format(filepath))
 
 
 def compute_stats(dataframe):
@@ -112,7 +111,7 @@ def post_request(genome_id):
         logger.exception("Error in the POST request")
 
 
-def write_post_req_to_fasta(response, genome_id):
+def write_post_req_to_fasta(response, genome_id, write_path):
 
     """
     This function writes the sequence in the response obtained from a POST request to a FASTA file.
@@ -122,6 +121,7 @@ def write_post_req_to_fasta(response, genome_id):
 
     response: Response object obtained from the successful POST request.
     genome_id: The name of the file and the genome ID for which the sequence is to be obtained.
+    write_path: The full path of the directory to where the files will be written to.
     """
     filename = str(genome_id)+'.fa'
     try:
@@ -130,7 +130,7 @@ def write_post_req_to_fasta(response, genome_id):
          logger.info("Empty output from POST request for genome id {}. Skipping this file".format(genome_id))
          return 
 
-      with open(os.path.join(output_dir, filename), "w") as file_:
+      with open(os.path.join(write_path, filename), "w") as file_:
         file_.write(response.text)
       
         logger.info("FASTA file for genome ID {} successfully written to disk".format(genome_id))
@@ -138,16 +138,53 @@ def write_post_req_to_fasta(response, genome_id):
 
             
     except Exception:
-        logger.exception("Issue with writing FASTA file for genome ID {}".format(genome_id))
+        loggeriexception("Issue with writing FASTA file for genome ID {}".format(genome_id))
     
+
+def set_parameters():
+    try:
+      parser = ap.ArgumentParser(description="Read CSV files and download FASTA files corresponding to the genome IDs in the CSV files.")
+      parser.add_argument("--pathogen", type=str, required=True, help="The name of the pathogen for which the data has to be downloaded. There should be a corresponding directory with the exact same name!")
+      parser.add_argument("--anti_microbial", type=str, required=True, help="The name of the anti microbial. There has to be a folder with the exact same name.")
+      parser.add_argument("--filename", type=str, required=True, help="The name of the CSV file.") 
+      args =  parser.parse_args()
+      return args
+    
+    except Exception:
+      logger.exception("Issue in setting parameters")
+
+
+def set_paths(config):
+   try:
+     path_dict = {}
+     path_dict["filepath"] = os.path.join(os.getcwd(), config.pathogen, config.anti_microbial, config.filename)
+     path_dict["write_path"] = os.path.join(os.getcwd(), config.pathogen, "fasta_files")
+     if not os.path.exists(path_dict["write_path"]):
+        os.mkdir(path_dict["write_path"])
+    
+     logger.info("File path is {}".format(path_dict["filepath"]))
+     logger.info("Write destination is {}".format(path_dict["write_path"])) 
+     return path_dict
+   
+   except Exception:
+     logger.exception("Issue while setting paths.")
 
 
 if __name__ == "__main__":
     
-    logging.info("Beginning the execution of the program")
+    logger.info("Beginning the execution of the program")
+    config = set_parameters()
+    path_dict = set_paths(config)
 
-    df = read_file()
+    logger.info("The name of the pathogen is {}".format(config.pathogen))
+
+    logger.info("The name of the anti microbial is {}".format(config.anti_microbial))
+    logger.info("The filename is {}".format(config.filename)) 
+    
+    
+    df = read_file(path_dict["filepath"])
     pct_count = compute_stats(df)
+   
     if pct_count == 1.0:
        logger.warning("All the files in the column are NaNs. Please check the file!! Stopping the download.")
        raise SystemExit
@@ -158,13 +195,14 @@ if __name__ == "__main__":
     for genome_id in df["genome_id"]:
 
         logger.info("Genome ID is {}".format(genome_id))
-        if os.path.exists(os.path.join(os.getcwd(),var_dict["fasta_dir"], str(genome_id)+'.fa')):
+        if os.path.exists(os.path.join(path_dict["write_path"], str(genome_id)+'.fa')):
             exist_ctr += 1
             logger.info("FASTA file for genome with genome ID {} exists. Skipping the download for this".format(genome_id))
             continue
         response = post_request(genome_id=genome_id)
-        write_post_req_to_fasta(response=response, genome_id=genome_id)
+        write_post_req_to_fasta(response=response, genome_id=genome_id, write_path=path_dict["write_path"])
         
 
-    logger.info("Program execution finished for organism:{} and AMR:{}".format(var_dict["organism"], var_dict["drug_name"]))
+    logger.info("Program execution finished!")
     logger.info("{} files already exist".format(exist_ctr))
+
