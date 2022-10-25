@@ -7,6 +7,7 @@ import pandas as pd
 ## Import the logging module
 import logging
 
+from custom_logger import CustomFormatter
 
 def set_logger(config):
     """
@@ -25,6 +26,11 @@ def set_logger(config):
     formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
+    
+    ch = logging.StreamHandler()
+    ch.setFormatter(CustomFormatter())
+    logger.addHandler(ch) 
+
     return logger
 
 
