@@ -57,6 +57,34 @@ def read_file(filepath):
        logger.exception("Issue with reading file at location {}".format(filepath))
 
 
+
+def check_amr_name(anti_microbial_name_user, anti_microbial_name_file):
+    
+    """
+    This function compares the user supplied name of the anti microbial with 
+    the name of the anti microbial in the CSV file. It returns a boolean flag depending on the 
+    result of the comparison.
+    
+    anti_microbial_name_user: The name of the anti microbial supplied by the user
+    anti_microbial_name_file: The name of the anti microbial read from the file
+    return: True (bool) if same, else False
+    """
+    
+    if anti_microbial_name_file is None:
+        logger.warning("The file doesn't containg the name of the drug. Please make sure you have entered the correct name!!")
+        return True
+
+    anti_microbial_name_user, anti_microbial_name_file = anti_microbial_name_user.lower(), anti_microbial_name_file.lower()
+    logger.info("The name of the anti microbial entered by you is {}".format(anti_microbial_name_user))
+    logger.info("The name of the anti microbial as per the file is {}".format(anti_microbial_name_file))
+    if anti_microbial_name_user == anti_microbial_name_file:
+        logger.info("Names match!")
+        return True
+    else:
+        logger.warning("Names do not match!")
+        return False
+   
+
 def compute_stats(dataframe):
     """
     For the pandas dataframe created from the csv file for a particular combination of 
@@ -152,7 +180,7 @@ def write_post_req_to_fasta(response, genome_id, write_path):
 
             
     except Exception:
-        loggeriexception("Issue with writing FASTA file for genome ID {}".format(genome_id))
+        logger.exception("Issue with writing FASTA file for genome ID {}".format(genome_id))
     
 
 def set_parameters():
@@ -207,12 +235,25 @@ if __name__ == "__main__":
     path_dict = set_paths(config)
 
     logger.info("The name of the pathogen is {}".format(config.pathogen))
-
     logger.info("The name of the anti microbial is {}".format(config.anti_microbial))
     logger.info("The filename is {}".format(config.filename)) 
     
-    """ 
-    df = read_file(path_dict["filepath"])
+ 
+    df = read_file(path_dict["filepath"]) 
+
+    if df.Antibiotic.nunique() != 1:
+        logger.warning("Multiple drugs in this file. Please check the file again.")
+        raise SystemExit
+
+    else:
+      amr_file_name = df["Antibiotic"].unique()[0]
+      check_flag = check_amr_name(anti_microbial_name_user = config.anti_microbial, 
+            anti_microbial_name_file = amr_file_name)
+    
+    if not check_flag:
+       logger.warning("Exiting the program due to mismatch!")
+       raise SystemExit
+
     pct_count = compute_stats(df)
    
     if pct_count == 1.0:
@@ -231,8 +272,8 @@ if __name__ == "__main__":
             continue
         response = post_request(genome_id=genome_id)
         write_post_req_to_fasta(response=response, genome_id=genome_id, write_path=path_dict["write_path"])
-    """    
+    
 
     logger.info("Program execution finished!")
-    #logger.info("{} files already exist".format(exist_ctr))
+    logger.info("{} files already exist".format(exist_ctr))
 
