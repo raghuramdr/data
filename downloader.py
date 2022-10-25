@@ -40,7 +40,7 @@ def read_file(filepath):
 
     try:
      assert os.path.exists(filepath), "File does not exist."
-     df = pd.read_csv(filepath, error_bad_lines=False, engine="python")
+     df = pd.read_csv(filepath, on_bad_lines='skip', engine="python")
      if df is None:
         logger.critical("The dataframe is of None type. Cannot proceed ahead! Please check! EXITING!")
         raise SystemExit
