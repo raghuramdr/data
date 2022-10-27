@@ -24,6 +24,7 @@
 
 `python downloader.py --p <name_of_the_pathogen> --a <name_of_the_anti_microbial> --f <filename.csv>` 
 
-### The code looks for a folder with the following directory structure, ´<cwd/name_of_the_pathogen/name_of_the_anti_microbial/filename.csv>´
+### The code looks for a folder with the following directory structure, 
+`<cwd/name_of_the_pathogen/name_of_the_anti_microbial/filename.csv>`
 ### So ensure that the folder names and directory structure matches as per this convention
 
