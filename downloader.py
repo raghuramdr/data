@@ -171,6 +171,7 @@ def write_post_req_to_fasta(response, genome_id, write_path):
     genome_id: The name of the file and the genome ID for which the sequence is to be obtained.
     write_path: The full path of the directory to where the files will be written to.
     """
+
     filename = str(genome_id)+'.fa'
     try:
      
@@ -220,9 +221,10 @@ def set_paths(config):
 
     try:
      path_dict = {}
+     #TODO: Move this to a config file
      path_dict["filepath"] = os.path.join(os.getcwd(), config.pathogen, config.anti_microbial, config.filename)
-     path_dict["write_path"] = os.path.join(os.getcwd(), config.pathogen, "fasta_files")
-     
+     path_dict["write_path"] = os.path.join(os.getcwd(), config.pathogen, 'fasta_files')
+ 
      if not os.path.exists(path_dict["write_path"]):
         os.mkdir(path_dict["write_path"])
     
@@ -246,9 +248,11 @@ if __name__ == "__main__":
     
  
     df = read_file(path_dict["filepath"]) 
+    if "/" in df["Antibiotic"]:
+        df["Antibiotic"]=df["Antibiotic"].str.replace("/", "_")
 
     if df.Antibiotic.nunique() != 1:
-        logger.warning("Multiple drugs in this file. Please check the file again.")
+        logger.debug("Multiple drugs in this file. Please check the file again.")
         raise SystemExit
 
     else:
@@ -257,13 +261,14 @@ if __name__ == "__main__":
             anti_microbial_name_file = amr_file_name)
     
     if not check_flag:
-       logger.warning("Exiting the program due to mismatch!")
+       logger.debug("Exiting the program due to mismatch! Make sure the name of the drug you entered matches EXACTLY with the name in the CSV file. Check the column 'Antibiotic' in the csv file")
        raise SystemExit
 
+   
     pct_count = compute_stats(df)
    
     if pct_count == 1.0:
-       logger.warning("All the files in the column are NaNs. Please check the file!! Stopping the download.")
+       logger.critical("All the files in the column are NaNs. Please check the file!! Stopping the download.")
        raise SystemExit
     
     df.dropna(subset=["genome_id"], inplace=True)
